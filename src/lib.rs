@@ -219,9 +219,9 @@ impl<S: GeeseSystem> GeeseContextHandle<S> {
     #[inline(always)]
     pub fn get_mut<T: GeeseSystem>(&mut self) -> SystemRefMut<T> {
         unsafe {
-            let index = static_eval!(
-                {
-                    if let Some(index) = S::DEPENDENCIES.index_of::<T>() {
+
+let index = {
+    if let Some(index) = S::DEPENDENCIES.index_of::<T>() {
                         assert!(
                             const_unwrap(S::DEPENDENCIES.as_inner().get(index)).mutable(),
                             "Attempted to mutably access an immutable dependency."
@@ -230,11 +230,8 @@ impl<S: GeeseSystem> GeeseContextHandle<S> {
                     } else {
                         GeeseContextHandle::<S>::panic_on_invalid_dependency::<T>()
                     }
-                },
-                usize,
-                S,
-                T
-            );
+};
+
             let ctx = (*self.inner.context).borrow();
             let global_index = self.inner.dependency_id(index as u16) as usize;
             assert!(
