@@ -8,18 +8,26 @@ pub struct ConstTypeId(TypeId);
 impl ConstTypeId {
     /// Gets the ID associated with the given type.
     pub const fn of<T: 'static>() -> Self {
-        Self(TypeId::of::<T>())
+        // Use type name hash instead of TypeId transmutation
+        Self {
+            hash: Self::const_hash(std::any::type_name::<T>()),
+        }
     }
 
-    /// Determines whether this type ID matches another. This function may only be used in
-    /// a `const` context on nightly.
-    pub const fn eq(&self, other: &Self) -> bool {
-        unsafe {
-            Self::arrays_eq(
-                transmute::<_, &[u8; size_of::<TypeId>()]>(self),
-                transmute(other),
-            )
+    const fn const_hash(s: &str) -> u64 {
+        let bytes = s.as_bytes();
+        let mut hash = 0xcbf29ce484222325u64; // FNV offset basis
+        let mut i = 0;
+        while i < bytes.len() {
+            hash ^= bytes[i] as u64;
+            hash = hash.wrapping_mul(0x100000001b3); // FNV prime
+            i += 1;
         }
+        hash
+    }
+
+    pub const fn eq(&self, other: &Self) -> bool {
+        self.hash == other.hash
     }
 
     /// Determines whether the two given arrays are equal.
