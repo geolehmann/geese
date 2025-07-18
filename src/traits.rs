@@ -91,15 +91,14 @@ impl Dependencies {
     /// Determines the local index in this dependency list of the provided system.
     #[inline(always)]
     pub(crate) const fn index_of<S: GeeseSystem>(&self) -> Option<usize> {
-        let mut i = 0;
-        while i < self.inner.len() {
-            if const_unwrap(self.inner.get(i))
-                .dependency_id()
-                .eq(&ConstTypeId::of::<S>())
-            {
-                return Some(i);
+        let target_type_id = std::any::TypeId::of::<T>();
+        
+        for (i, dep) in self.inner.iter().enumerate() {
+            if let Some(dep) = dep {
+                if dep.runtime_type_id() == target_type_id {
+                    return Some(i);
+                }
             }
-            i += 1;
         }
         None
     }
